@@ -30,6 +30,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    void adjustToScreenSize();
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void setTireTab();

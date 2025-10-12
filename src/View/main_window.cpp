@@ -29,11 +29,32 @@
 #include "src/Model/tire_model.h"
 
 
+void MainWindow::adjustToScreenSize(){
+    QScreen *screen = QGuiApplication::primaryScreen();
+    QRect screenGeometry = screen->availableGeometry();
+    
+    int screenWidth = screenGeometry.width();
+    int screenHeight = screenGeometry.height();
+    
+    // Calculate appropriate window size (e.g., 80% of screen)
+    int windowWidth = qMin(1047, static_cast<int>(screenWidth * 0.8));
+    int windowHeight = qMin(829, static_cast<int>(screenHeight * 0.8));
+    
+    this->resize(windowWidth, windowHeight);
+    
+    // Center the window
+    this->move((screenWidth - windowWidth) / 2, 
+               (screenHeight - windowHeight) / 2);
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+
+
     ui->setupUi(this);
+    adjustToScreenSize();  // Adjust to screen size
     setWindowTitle("Bicycle Model V2");
 
     // Setup of Images used in the interdface
