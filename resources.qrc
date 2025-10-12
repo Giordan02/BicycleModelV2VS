@@ -1,0 +1,8 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource prefix="/">
+    <file>resources/optimumg.png</file>
+    <file>resources/BicycleModel.png</file>
+    <file>resources/Equations.png</file>
+</qresource>
+</RCC>
