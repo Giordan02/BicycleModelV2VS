@@ -2,6 +2,10 @@
 #include "src/Controller/input_manager.h"
 #include <iostream>
 
+#include <fstream>
+#include <vector>
+#include <cmath>
+
 /**
  * @brief Sets the physically plausible upper and lower bounds for the solver's variables.
  * This prevents the solver from exploring unrealistic solutions.
@@ -175,28 +179,58 @@ void testsolver(){
     veh.Af = 1.0;
     veh.f_r_F = 0.001;
 
-    setDefaultTires(veh.FrontTire, veh.RearTire);
+    //std::vector<double> iterativeGuess = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; // Initial guess for [alpha_F, alpha_R, kappa_F, kappa_R, V, Vx, Vy]
 
-    for (double i = 0.03; i <= 0.1; i += 0.001) {
+    std::ofstream file("FindTangentSpeed.csv");
+    file << "Delta (deg), V1 (m/s), beta1 (deg), NI1, , V2 (m/s), beta2 (deg), NI2, , V3 (m/s), beta3 (deg), NI3\n";
+    file.close();
+
+    setDefaultTires(veh.FrontTire, veh.RearTire);
+    
+    /*
+    for (double i = 0.01; i <= 0.3; i += 0.001) {
         Individual ind(i, 0.1);
+        file << radToDegree(i) << ", ";
 
         ind.defineGuesses(0.0, 0.0, 0.00, 0.0, 10.0, 10.0, 0.0);
         solveIndividual(ind, veh, sol, OptimizationConfig());
-        std::cout << "Guesses 2: \n" ;
+        /*
         if (ind.converged) {
-            std::cout << "Solver converged for delta = " << radToDegree(i) << " with fitness = " << ind.fitness << " m/s and Vy" << ind.Vy << std::endl;
-            std::cout << "Residuals: ";
-            for (const auto& res : ind.residuals) { std::cout << res << " "; }
-            std::cout << "Number of Iteratios" << ind.summary.iterations.size()<< std::endl;
+            file << ind.fitness << ", " << radToDegree(atan2(ind.Vy, ind.Vx)) << ", " << " " << ", , ";
         } else {
-            std::cout << "Solver did not converge for delta = " << radToDegree(i) << std::endl;
+            file << ", , , , ";
         }
-    }
 
-/*
-    for (double i = 0.04; i <= 0.06; i += 0.0005) {
+        /*
+        ind.defineGuesses(0.03, 0.03, 0.1, 0.1, 30.0, 30.0, 5.0);
+        solveIndividual(ind, veh, sol, OptimizationConfig());
+        if (ind.converged) {
+            file << ind.fitness << ", " << radToDegree(atan2(ind.Vy, ind.Vx)) << ", " << ind.summary.iterations.size() << ", , ";
+        } else {
+            file << ", , , , ";
+        }
+        
+        
+        ind.defineGuesses(iterativeGuess[0], iterativeGuess[1], iterativeGuess[2], iterativeGuess[3], iterativeGuess[4], iterativeGuess[5], iterativeGuess[6]);
+        solveIndividual(ind, veh, sol, OptimizationConfig());
+        if (ind.converged) {
+            file << ind.fitness << ", " << radToDegree(atan2(ind.Vy, ind.Vx)) << ", " << ind.summary.iterations.size() << "\n";
+            iterativeGuess = {ind.alpha_F, ind.alpha_R, ind.kappa_F, ind.kappa_R, ind.V_guess, ind.Vx, ind.Vy};
+            std::cout << ind.alpha_F << ", " << ind.alpha_R << ", " << ind.kappa_F << ", " << ind.kappa_R << ", " << ind.V_guess << ", " << ind.Vx << ", " << ind.Vy << endl;
+        } else {
+            file << ", , , \n";
+        }
+        
+    }
+    
+
+    file.close();
+    std::cout << "CSV file created successfully!" << std::endl;
+    */
+
+    for (double i = 0.04; i <= 0.06; i += 0.01) {
         Individual ind(i, 0.1);
-        ind.defineGuesses(0.0, 0.0, 0.00, 0.0, 10.0, 10.0, 0.0);
+        ind.defineGuesses(0.0, 0.0, 0.0, 0.0, 10.0, 10.0, 0.0);
         solveIndividual(ind, veh, sol, OptimizationConfig());
         std::cout << "Tangent Velocity: \n" ;
         if (ind.converged && ind.Vy < 0.1 && ind.Vy > -0.1) {
@@ -206,6 +240,6 @@ void testsolver(){
             std::cout << "Number of Iteratios" << ind.summary.iterations.size()<< std::endl;
         }
     }
-*/
+
 
 }

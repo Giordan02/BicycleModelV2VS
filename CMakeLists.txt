@@ -64,7 +64,7 @@ set(UIS
     src/view/mainwindow.ui
 )
 
-add_executable(${PROJECT_NAME} WIN32
+add_executable(${PROJECT_NAME} 
     ${SOURCES}
     ${HEADERS}
     ${UIS}

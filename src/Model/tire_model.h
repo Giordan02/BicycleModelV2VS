@@ -24,6 +24,33 @@ T sgn(const T& x) {
 }
 
 /**
+ * @brief Smooth approximation to sgn(x) = x / sqrt(x^2 + eps), differentiable at 0.
+ * @param x The input value.
+ * @param eps Small positive value for smoothing (default 1e-8).
+ * @return Approximated sign: ~1 for positive, ~-1 for negative, 0 at zero.
+ * @tparam T The numeric type (e.g., double, ceres::Jet).
+ */
+template<typename T>
+T smooth_sgn(const T& x, const T& eps = T(1e-8)) {
+    return x / ceres::sqrt(x * x + eps);
+}
+
+/**
+ * @brief Smooth approximation to min(a, b) using quadratic smoothing.
+ * Error at a==b is ~sqrt(eps)/2; use small eps for accuracy, larger for smoother derivatives.
+ * @param a First value.
+ * @param b Second value.
+ * @param eps Smoothing parameter (default 1e-6).
+ * @return Approximated min(a, b).
+ * @tparam T The numeric type.
+ */
+template<typename T>
+T smooth_min(const T& a, const T& b, const T& eps = T(1e-6)) {
+    return (a + b - ceres::sqrt((a - b) * (a - b) + eps)) / T(2.0);
+}
+
+
+/**
  * @struct PacejkaParams
  * @brief Holds all the coefficients for the Pacejka 'Magic Formula' 5.2 tire model.
  * The parameters are grouped by the force or moment they affect.
@@ -134,7 +161,7 @@ T calculatePureLongitudinalForce(const PacejkaParams& params, const T& F_z, cons
     T B_x = K_x / (C_x * D_x);
     T S_Hx = (T(params.p_Hx1) + T(params.p_Hx2) * df_z) * T(params.lambda_Hx);
     T kappa_x = kappa + S_Hx;
-    T E_x = (T(params.p_Ex1) + T(params.p_Ex2) * df_z + T(params.p_Ex3) * df_z * df_z) * (T(1.0) - T(params.p_Ex4) * sgn(kappa_x)) * T(params.lambda_Ex);
+    T E_x = (T(params.p_Ex1) + T(params.p_Ex2) * df_z + T(params.p_Ex3) * df_z * df_z) * (T(1.0) - T(params.p_Ex4) * smooth_sgn(kappa_x)) * T(params.lambda_Ex);
     T S_Vx = F_z * (T(params.p_Vx1) + T(params.p_Vx2) * df_z) * T(params.lambda_Vx) * T(params.lambda_mux);
     T arg = B_x * kappa_x - E_x * (B_x * kappa_x - ceres::atan(B_x * kappa_x));
     T F_xo = D_x * ceres::sin(C_x * ceres::atan(arg)) + S_Vx;
@@ -161,7 +188,7 @@ T calculatePureLateralForce(const PacejkaParams& params, const T& F_z, const T& 
     T B_y = K_y / (C_y * D_y);
     T S_Hy = (T(params.p_Hy1) + T(params.p_Hy2) * df_z) * T(params.lambda_Hy) + T(params.p_Hy3) * gamma_y;
     T alpha_y = alpha + S_Hy;
-    T E_y = (T(params.p_Ey1) + T(params.p_Ey2) * df_z) * (T(1.0) - (T(params.p_Ey3) + T(params.p_Ey4) * gamma_y) * sgn(alpha_y)) * T(params.lambda_Ey);
+    T E_y = (T(params.p_Ey1) + T(params.p_Ey2) * df_z) * (T(1.0) - (T(params.p_Ey3) + T(params.p_Ey4) * gamma_y) * smooth_sgn(alpha_y)) * T(params.lambda_Ey);
     T arg = B_y * alpha_y - E_y * (B_y * alpha_y - ceres::atan(B_y * alpha_y));
     T S_Vy = F_z * ((T(params.p_Vy1) + T(params.p_Vy2) * df_z) * T(params.lambda_Vy) + (T(params.p_Vy3) + T(params.p_Vy4) * df_z) * gamma_y) * T(params.lambda_muy);
     T F_yo = D_y * ceres::sin(C_y * ceres::atan(arg)) + S_Vy;
@@ -189,7 +216,7 @@ T calculatePureAligningMoment(const PacejkaParams& params, const T& F_z, const T
     T B_y = K_y / (C_y * D_y);
     T S_Hy = (T(params.p_Hy1) + T(params.p_Hy2) * df_z) * T(params.lambda_Hy) + T(params.p_Hy3) * gamma_y;
     T alpha_y = alpha + S_Hy;
-    T E_y = (T(params.p_Ey1) + T(params.p_Ey2) * df_z) * (T(1.0) - (T(params.p_Ey3) + T(params.p_Ey4) * gamma_y) * sgn(alpha_y)) * T(params.lambda_Ey);
+    T E_y = (T(params.p_Ey1) + T(params.p_Ey2) * df_z) * (T(1.0) - (T(params.p_Ey3) + T(params.p_Ey4) * gamma_y) * smooth_sgn(alpha_y)) * T(params.lambda_Ey);
     T arg = B_y * alpha_y - E_y * (B_y * alpha_y - ceres::atan(B_y * alpha_y));
     T S_Vy = F_z * ((T(params.p_Vy1) + T(params.p_Vy2) * df_z) * T(params.lambda_Vy) + (T(params.p_Vy3) + T(params.p_Vy4) * df_z) * gamma_y) * T(params.lambda_muy);
     T F_yo = D_y * ceres::sin(C_y * ceres::atan(arg)) + S_Vy;
@@ -230,7 +257,7 @@ T calculateCombinedLongitudinalForce(const PacejkaParams& params, const T& F_z, 
     T C_xa = T(params.r_Cx1);
     T E_xa = T(params.r_Ex1) + T(params.r_Ex2) * df_z;
     T denom = ceres::cos(C_xa * ceres::atan(B_xa * S_Hxa - E_xa * (B_xa * S_Hxa - ceres::atan(B_xa * S_Hxa))));
-    T D_xa = (ceres::abs(denom) > T(1e-10)) ? F_x0 / denom : F_x0;
+    T D_xa = F_x0 / (denom + T(1e-10));
     T arg = B_xa * a_s - E_xa * (B_xa * a_s - ceres::atan(B_xa * a_s));
     T F_x = D_xa * ceres::cos(C_xa * ceres::atan(arg));
     return F_x;
@@ -256,7 +283,7 @@ T calculateCombinedLateralForce(const PacejkaParams& params, const T& F_z, const
     T D_Vyk = mu_y * F_z * (T(params.r_Vy1) + T(params.r_Vy2) * df_z + T(params.r_Vy3) * gamma_y) * ceres::cos(ceres::atan(T(params.r_Vy4) * alpha));
     T S_Vyk = D_Vyk * ceres::sin(T(params.r_Vy5) * ceres::atan(T(params.r_Vy6) * kappa)) * T(params.lambda_Vykappa);
     T denom = ceres::cos(C_yk * ceres::atan(B_yk * S_Hyk - E_yk * (B_yk * S_Hyk - ceres::atan(B_yk * S_Hyk))));
-    T D_yk = (ceres::abs(denom) > T(1e-10)) ? F_y0 / denom : F_y0;
+    T D_yk = F_y0 / (denom + T(1e-10));
     T arg = B_yk * k_s - E_yk * (B_yk * k_s - ceres::atan(B_yk * k_s));
     T F_y = D_yk * ceres::cos(C_yk * ceres::atan(arg)) + S_Vyk;
     return F_y;
@@ -280,7 +307,7 @@ T calculateCombinedAligningMoment(const PacejkaParams& params, const T& F_z, con
     T B_y = K_y / (C_y * D_y);
     T S_Hy = (T(params.p_Hy1) + T(params.p_Hy2) * df_z) * T(params.lambda_Hy) + T(params.p_Hy3) * gamma_y;
     T alpha_y = alpha + S_Hy;
-    T E_y = (T(params.p_Ey1) + T(params.p_Ey2) * df_z) * (T(1.0) - (T(params.p_Ey3) + T(params.p_Ey4) * gamma_y) * sgn(alpha_y)) * T(params.lambda_Ey);
+    T E_y = (T(params.p_Ey1) + T(params.p_Ey2) * df_z) * (T(1.0) - (T(params.p_Ey3) + T(params.p_Ey4) * gamma_y) * smooth_sgn(alpha_y)) * T(params.lambda_Ey);
     T arg = B_y * alpha_y - E_y * (B_y * alpha_y - ceres::atan(B_y * alpha_y));
     T S_Vy = F_z * ((T(params.p_Vy1) + T(params.p_Vy2) * df_z) * T(params.lambda_Vy) + (T(params.p_Vy3) + T(params.p_Vy4) * df_z) * gamma_y) * T(params.lambda_muy);
 
@@ -291,8 +318,7 @@ T calculateCombinedAligningMoment(const PacejkaParams& params, const T& F_z, con
     T B_t = (T(params.q_Bz1) + T(params.q_Bz2) * df_z + T(params.q_Bz3) * df_z * df_z) * (T(1.0) + T(params.q_Bz4) * gamma_z + T(params.q_Bz5) * abs(gamma_z)) * T(params.lambda_Ky) / T(params.lambda_muy);
     T C_t = T(params.q_Cz1);
     T Et_factor = T(1.0) + (T(params.q_Ez4) + T(params.q_Ez5) * gamma_z) * (T(2.0) / T(PI)) * ceres::atan(B_t * C_t * alpha_t);
-    T E_t = (T(params.q_Ez1) + T(params.q_Ez2) * df_z + T(params.q_Ez3) * df_z * df_z) * std::min(T(1.0), Et_factor);
-    T D_t = F_z * (T(params.q_Dz1) + T(params.q_Dz2) * df_z) * (T(1.0) + T(params.q_Dz3) * gamma_z + T(params.q_Dz4) * gamma_z * gamma_z) * (T(params.R_0) / T(params.F_z0)) * T(params.lambda_t);
+    T E_t = (T(params.q_Ez1) + T(params.q_Ez2) * df_z + T(params.q_Ez3) * df_z * df_z) * smooth_min(Et_factor, T(1.0));    T D_t = F_z * (T(params.q_Dz1) + T(params.q_Dz2) * df_z) * (T(1.0) + T(params.q_Dz3) * gamma_z + T(params.q_Dz4) * gamma_z * gamma_z) * (T(params.R_0) / T(params.F_z0)) * T(params.lambda_t);
     T B_t_alpha_t = B_t * alpha_t;
     T term_inside_arctan = B_t_alpha_t - E_t * (B_t_alpha_t - ceres::atan(B_t_alpha_t));
     T B_r = T(params.q_Bz9) * T(params.lambda_Ky) / T(params.lambda_muy) + T(params.q_Bz10) * B_y * C_y;
@@ -302,13 +328,15 @@ T calculateCombinedAligningMoment(const PacejkaParams& params, const T& F_z, con
     T K_x = F_z * (T(params.p_Kx1) + T(params.p_Kx2) * df_z) * ceres::exp(T(params.p_Kx3) * df_z) * T(params.lambda_Kx);
 
     T tan_alpha_t = ceres::tan(alpha_t);
-    T Kx_div_Ky = K_x / K_y; 
-    T term_under_sqrt_t = tan_alpha_t * tan_alpha_t + Kx_div_Ky * Kx_div_Ky * kappa * kappa;
-    T alpha_t_eq = ceres::atan(sqrt(term_under_sqrt_t)) * sgn(alpha_t);
+    T safe_K_y = K_y + T(1e-8);  // Prevent div-by-zero or small K_y
+    T tmp_t = K_x * kappa / safe_K_y;
+    T term_under_sqrt_t = tan_alpha_t * tan_alpha_t + tmp_t * tmp_t + T(1e-10);
+    T alpha_t_eq = ceres::atan(sqrt(term_under_sqrt_t)) * smooth_sgn(alpha_t);
 
     T tan_alpha_r = ceres::tan(alpha_r);
-    T term_under_sqrt_r = tan_alpha_r * tan_alpha_r + Kx_div_Ky * Kx_div_Ky * kappa * kappa;
-    T alpha_r_eq = ceres::atan(sqrt(term_under_sqrt_r)) * sgn(alpha_r);
+    T tmp_r = K_x * kappa / safe_K_y;
+    T term_under_sqrt_r = tan_alpha_r * tan_alpha_r + tmp_r * tmp_r + T(1e-10);
+    T alpha_r_eq = ceres::atan(sqrt(term_under_sqrt_r)) * smooth_sgn(alpha_r);
 
     T D_Vyk = mu_y * F_z * (T(params.r_Vy1) + T(params.r_Vy2) * df_z + T(params.r_Vy3) * gamma_y) * ceres::cos(ceres::atan(T(params.r_Vy4) * alpha));
     T S_Vyk = D_Vyk * ceres::sin(T(params.r_Vy5) * ceres::atan(T(params.r_Vy6) * kappa)) * T(params.lambda_Vykappa);
