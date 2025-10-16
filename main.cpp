@@ -6,9 +6,8 @@
 
 int main(int argc, char *argv[])
 {
-    testsolver();
+    //testsolver();
 
-    /*
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
@@ -20,6 +19,6 @@ int main(int argc, char *argv[])
     w.setDefaultValues();
     w.show();
     return a.exec();
-    */
+    
     
 }

@@ -179,55 +179,58 @@ void testsolver(){
     veh.Af = 1.0;
     veh.f_r_F = 0.001;
 
-    //std::vector<double> iterativeGuess = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; // Initial guess for [alpha_F, alpha_R, kappa_F, kappa_R, V, Vx, Vy]
+    std::vector<double> iterativeGuess = {0.01, 0.01, 0.005, 0.005, 10.0, 10.0, 0.2}; // Initial guess for [alpha_F, alpha_R, kappa_F, kappa_R, V, Vx, Vy]
 
     std::ofstream file("FindTangentSpeed.csv");
-    file << "Delta (deg), V1 (m/s), beta1 (deg), NI1, , V2 (m/s), beta2 (deg), NI2, , V3 (m/s), beta3 (deg), NI3\n";
-    file.close();
+    //file << "Delta (deg); V1 (m/s); beta1 (deg); NI1; ; V2 (m/s); beta2 (deg); NI2; ; V3 (m/s); beta3 (deg); NI3\n";
+    file << "Delta (deg); V1 (m/s); beta1 (deg); alpha_f guess ; alpha_r guess; kappa_f guess; kappa_r guess; V guess; Vx guess; Vy guess\n";
 
     setDefaultTires(veh.FrontTire, veh.RearTire);
     
-    /*
-    for (double i = 0.01; i <= 0.3; i += 0.001) {
+    
+    for (double i = 0.0849; i <= 0.0860; i += 0.00005) {
         Individual ind(i, 0.1);
-        file << radToDegree(i) << ", ";
+
+        file << radToDegree(i) << ";";
 
         ind.defineGuesses(0.0, 0.0, 0.00, 0.0, 10.0, 10.0, 0.0);
         solveIndividual(ind, veh, sol, OptimizationConfig());
-        /*
+        
         if (ind.converged) {
-            file << ind.fitness << ", " << radToDegree(atan2(ind.Vy, ind.Vx)) << ", " << " " << ", , ";
+            //file << ind.fitness << ";" << radToDegree(atan2(ind.Vy, ind.Vx)) << ";;;";
+            file << ind.fitness << ";" << radToDegree(atan2(ind.Vy, ind.Vx)) << ";" << ind.alpha_F_guess << ";" << ind.alpha_R_guess << ";" << ind.kappa_F_guess << ";" << ind.kappa_R_guess << ";" << ind.V_guess << ";" << ind.Vx_guess << ";" << ind.Vy_guess << ";";
         } else {
-            file << ", , , , ";
+            file << ";;;;";
         }
 
         /*
-        ind.defineGuesses(0.03, 0.03, 0.1, 0.1, 30.0, 30.0, 5.0);
+        ind.defineGuesses(0.03, 0.03, 0.1, 0.1, 25.0, 25.0, 5.0);
         solveIndividual(ind, veh, sol, OptimizationConfig());
         if (ind.converged) {
-            file << ind.fitness << ", " << radToDegree(atan2(ind.Vy, ind.Vx)) << ", " << ind.summary.iterations.size() << ", , ";
+            file << ind.fitness << ";" << radToDegree(atan2(ind.Vy, ind.Vx)) << ";" << " " << ";;";
         } else {
-            file << ", , , , ";
+            file << ";;;;";
         }
-        
-        
-        ind.defineGuesses(iterativeGuess[0], iterativeGuess[1], iterativeGuess[2], iterativeGuess[3], iterativeGuess[4], iterativeGuess[5], iterativeGuess[6]);
-        solveIndividual(ind, veh, sol, OptimizationConfig());
-        if (ind.converged) {
-            file << ind.fitness << ", " << radToDegree(atan2(ind.Vy, ind.Vx)) << ", " << ind.summary.iterations.size() << "\n";
-            iterativeGuess = {ind.alpha_F, ind.alpha_R, ind.kappa_F, ind.kappa_R, ind.V_guess, ind.Vx, ind.Vy};
-            std::cout << ind.alpha_F << ", " << ind.alpha_R << ", " << ind.kappa_F << ", " << ind.kappa_R << ", " << ind.V_guess << ", " << ind.Vx << ", " << ind.Vy << endl;
+        /*
+        Individual ind3(i, 0.1);
+        ind3.defineGuesses(iterativeGuess[0], iterativeGuess[1], iterativeGuess[2], iterativeGuess[3], iterativeGuess[4], iterativeGuess[5], iterativeGuess[6]);
+        solveIndividual(ind3, veh, sol, OptimizationConfig());
+        if (ind3.converged) {
+            file << ind3.fitness << ";" << radToDegree(atan2(ind3.Vy, ind3.Vx)) << ";" << " " << ";;";
+            iterativeGuess = {ind3.alpha_F, ind3.alpha_R, ind3.kappa_F, ind3.kappa_R, ind3.V_guess, ind3.Vx, ind3.Vy};
         } else {
-            file << ", , , \n";
+            file << ";;;;";
         }
-        
+        */
+        file << "\n";
     }
     
 
     file.close();
     std::cout << "CSV file created successfully!" << std::endl;
-    */
+    
 
+    /*
     for (double i = 0.04; i <= 0.06; i += 0.01) {
         Individual ind(i, 0.1);
         ind.defineGuesses(0.0, 0.0, 0.0, 0.0, 10.0, 10.0, 0.0);
@@ -240,6 +243,7 @@ void testsolver(){
             std::cout << "Number of Iteratios" << ind.summary.iterations.size()<< std::endl;
         }
     }
+    */
 
 
 }
